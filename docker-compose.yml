@@ -1,0 +1,34 @@
+# docker-compose.yml
+services:
+  jenkins:
+    # build: .
+    image: jenkins/jenkins:lts
+    privileged: true
+    ports:
+      - 50000:50000
+      - 8080:8080
+    container_name: jenkins
+  
+  jnlp-agent:
+    image: jenkins/inbound-agent
+    container_name: jnlp-agent
+    working_dir: /home/jenkins
+    environment:
+      - JENKINS_URL=http://jenkins:8080
+      - JENKINS_SECRET= # This is the secret key that you get from the Jenkins server
+      - JENKINS_AGENT_NAME=jnlp-agent
+
+  npm-node-agent:
+    build: ./inbound-agent
+    container_name: npm-node-agent
+    working_dir: /home/jenkins
+    environment:
+      - JENKINS_URL=http://jenkins:8080
+      - JENKINS_SECRET= # This is the secret key that you get from the Jenkins server
+      - JENKINS_AGENT_NAME=npm-node-agent
+
+  agent1:
+    image: jenkins/ssh-agent:latest-debian-jdk21
+    container_name: agent1
+    environment:
+      - JENKINS_AGENT_SSH_PUBKEY= # This is the public key that you get from the Jenkins server
