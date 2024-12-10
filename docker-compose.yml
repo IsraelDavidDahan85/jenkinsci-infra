@@ -7,6 +7,8 @@ services:
     ports:
       - 50000:50000
       - 8080:8080
+    volumes:
+      - jenkins_home:/var/jenkins_home
     container_name: jenkins
   
   jnlp-agent:
@@ -32,3 +34,52 @@ services:
     container_name: agent1
     environment:
       - JENKINS_AGENT_SSH_PUBKEY= # This is the public key that you get from the Jenkins server
+
+  docekr-agent:
+    build: ./docker-in-docker
+    container_name: docekr-agent
+    working_dir: /home/jenkins
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - JENKINS_URL=http://jenkins:8080
+      - JENKINS_SECRET= # This is the secret key that you get from the Jenkins server
+      - JENKINS_AGENT_NAME=docker-agent
+
+  gitea:
+    image: gitea/gitea:1.22.4
+    container_name: gitea
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - GITEA__database__DB_TYPE=postgres
+      - GITEA__database__HOST=db:5432
+      - GITEA__database__NAME=gitea
+      - GITEA__database__USER=gitea
+      - GITEA__database__PASSWD=gitea
+    depends_on:
+      - db
+    volumes:
+      - gitea:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "3000:3000"
+      - "222:22"
+
+  db:
+    image: postgres:14
+    restart: always
+    environment:
+      - POSTGRES_USER=gitea
+      - POSTGRES_PASSWORD=gitea
+      - POSTGRES_DB=gitea
+    volumes:
+      - postgres:/var/lib/postgresql/data
+
+
+volumes:
+  jenkins_home:
+  gitea:
+  postgres:
+
